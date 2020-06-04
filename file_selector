@@ -77,15 +77,20 @@ done < "$input"
 
 awk '{ print $2}' matching.txt >> wavs2move.txt
 
+# If there are some labels where no matching wav could be found, the second column now 
+# contains a csv. Remove these lines:
+
+awk '!/.csv/' wavs2move.txt | awk '!/.CSV/' > wavs2move_clean.txt
+
 # Move wav files into new directory
 rm matched_wavs
 new_folder="matched_wavs"
 mkdir $new_folder
 chmod 777 $new_folder
 
-if [ -s wavs2move.txt ]
+if [ -s wavs2move_clean.txt ]
 then
-        for file in $(<wavs2move.txt); do cp "$file" $new_folder; done
+        for file in $(<wavs2move_clean.txt); do cp "$file" $new_folder; done
 else
         echo "No matched wavs found to move."
 fi
