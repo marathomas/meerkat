@@ -1,0 +1,105 @@
+#!/bin/bash
+
+: '
+Bash script written to find the corresponding audio files for the csv files containing the labelling. They can be paired by the unique identifier present in the file name. Audio files: uniqueID.wav CSV files: uniqueID_XX.csv. Output is a tabular txt containing the matching (filename | wav file | csv file) and a folder matched_wavs with copies of the matched wav files.
+'
+
+# Print information to console
+
+echo "#################################################################################"
+echo "File selector: Meerkat wavs and CSV label files"
+echo "Usage: ./file_selector -csv|--csvfolder [pathToLabelCSVFiles] -wav|--wavfolder [pathToAudioWAVFiles]"
+echo "Output files in currentWorkingDirectory/out/..."
+echo "#################################################################################"
+
+# Read command line args
+while [[ "$#" -gt 0 ]]; do case $1 in
+  -csv|--csvfolder) csv_folder="$2"; shift;;
+  -wav|--wavfolder) wav_folder="$2"; shift;;
+  *)
+esac; shift; done
+
+echo "Current input parameters:"
+echo
+echo "Path to CSV label files: $csv_folder"
+echo "Path to WAV audio files: $wav_folder"
+
+outDir="out"
+mkdir $outDir
+chmod 777 $outDir
+cd $outDir
+
+# Make list of all wav files on hard drive (containing the audio), searching through all subfolders
+
+> wav_files.txt
+echo "Finding wav files..."
+find $wav_folder -iname *.wav -not -path '*/\.*' -type f -print0 | while read -d $'\0' file; do 
+    echo "$file" >> wav_files.txt
+done
+# (print0 and -d $'\0' help to handle filenames with spaces)
+# (-not -path '*/\.*' excludes hidden files)
+
+n=$(< wav_files.txt wc -l)
+echo "Found $n wav files"
+
+
+# Make list of all csv files (containing the labels)
+echo "Finding csv files..."
+> csv_files.txt
+find $csv_folder -iname *.csv -not -path '*/\.*' -type f -print0 | while read -d $'\0' file; do
+    echo "$file" >> csv_files.txt
+done
+n=$(< csv_files.txt wc -l)
+echo "Found $n csv files"
+
+# Remove "_Labels" etc and other non-numeric extensions from labels filenames
+rev csv_files.txt | sed 's/[^0-9]*//' | rev > csv_clean.txt
+
+
+# Loop through csv files, find corresponding wav files and print resulting matching as table
+echo "Finding matching files..."
+
+> matching.txt
+input="csv_clean.txt"
+no_match=0
+match=0
+
+while IFS= read -r line
+do
+   filename=$(basename "$line") # get filename
+   printf "$filename%s\t" >> matching.txt
+
+   wav=$(grep -m 1 "$filename" wav_files.txt)
+   printf "$wav%s\t" >> matching.txt
+   grep -m 1 "$filename" csv_files.txt >> matching.txt
+   
+done < "$input"
+
+awk '{ print $2}' matching.txt >> wavs2move.txt
+
+# Move wav files into new directory
+rm matched_wavs
+new_folder="matched_wavs"
+mkdir $new_folder
+chmod 777 $new_folder
+
+if [ -s wavs2move.txt ]
+then
+        for file in $(<wavs2move.txt); do cp "$file" $new_folder; done
+else
+        echo "No matched wavs found to move."
+fi
+
+# Cleanup
+
+rm wavs2move.txt
+rm csv_files.txt
+rm wav_files.txt
+rm csv_clean.txt
+
+
+
+
+
+
+
