@@ -1,14 +1,19 @@
 #!/bin/bash
 
 : '
-Bash script written to find the corresponding audio files for the csv files containing the labelling. They can be paired by the unique identifier present in the file name. Audio files: uniqueID.wav CSV files: uniqueID_XX.csv. Output is a tabular txt containing the matching (filename | wav file | csv file) and a folder matched_wavs with copies of the matched wav files.
+Bash script written to find the corresponding audio files for the csv files containing the labelling. 
+They can be paired by the unique identifier present in the file name. 
+Audio files: uniqueID_XX.wav 
+CSV files: uniqueID_XX.csv. 
+Output is a tabular txt containing the matching (filename | wav file | csv file) and a folder matched_wavs with 
+copies of the matched wav files.
 '
 
 # Print information to console
 
 echo "#################################################################################"
 echo "File selector: Meerkat wavs and CSV label files"
-echo "Usage: ./file_selector -csv|--csvfolder [pathToLabelCSVFiles] -wav|--wavfolder [pathToAudioWAVFiles]"
+echo "Usage: ./file_selector -csv|--csvfolder [pathToFolderContainingCSVFiles] -wav|--wavfolder [pathToFolderContainingAudioWAVFiles]"
 echo "Output files in currentWorkingDirectory/out/..."
 echo "#################################################################################"
 
@@ -29,7 +34,7 @@ mkdir $outDir
 chmod 777 $outDir
 cd $outDir
 
-# Make list of all wav files on hard drive (containing the audio), searching through all subfolders
+# Make list of all wav files in wav_folder, also searching through all subfolders
 
 > wav_files.txt
 echo "Finding wav files..."
